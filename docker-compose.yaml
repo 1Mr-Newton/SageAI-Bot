@@ -1,0 +1,12 @@
+version: "3.8"
+
+services:
+  sageai-bot:
+    container_name: sage_ai_bot
+    build: .
+    environment:
+      API_ID: ${API_ID}
+      API_HASH: ${API_HASH}
+      BOT_TOKEN: ${BOT_TOKEN}
+
+    restart: unless-stopped
