@@ -6,6 +6,7 @@ from src.functions.get_convo_title import get_convo_title
 from src.functions.safe_send import safe_send_message
 import openai
 from src.api.toolnames import tools
+from src.api.tools_dict import tools_dict
 from openai.types.chat import ChatCompletion
 from openai.types.chat.chat_completion_message_param import ChatCompletionMessageParam
 from openai.types.chat.chat_completion_user_message_param import (
@@ -14,6 +15,10 @@ from openai.types.chat.chat_completion_user_message_param import (
 from openai.types.chat.chat_completion_assistant_message_param import (
     ChatCompletionAssistantMessageParam as AssistantMessage,
 )
+from openai.types.chat.chat_completion_tool_message_param import (
+    ChatCompletionToolMessageParam as ToolMessage,
+)
+from src.config.client import client
 
 
 async def process_response(
@@ -50,9 +55,10 @@ async def process_response(
                     {message.content}""",
                 },
             ]
-            title = get_convo_title(title_message)
-            user_current_conv.title = title.replace('"', "")
-            session.commit()
+            if not user_current_conv.title:
+                title = get_convo_title(title_message)
+                user_current_conv.title = title.replace('"', "")
+                session.commit()
 
         else:
             await response_message.delete()
@@ -61,16 +67,60 @@ async def process_response(
                 message="Sorry, I could not understand your query. Please try again.",
             )
     else:
+        tools_calls = message.tool_calls
+
+        if tools_calls:
+            tool = tools_calls[0]
+            toolName = tool.function.name
+
+            args: dict = json.loads(str(tool.function.arguments))
+
+            func_to_call = tools_dict[toolName]
+            response = func_to_call(**args)
+
+            tool_message = ToolMessage(
+                content=response,
+                role="tool",
+                tool_call_id=tool.id,
+            )
+            assistant_message = AssistantMessage(
+                content=message.content,
+                role="assistant",
+                tool_calls=[json.loads(tc.model_dump_json()) for tc in tools_calls],
+                name=toolName,
+            )
+            messages.append(assistant_message)
+
+            messages.append(tool_message)
+            if (
+                toolName == "generate_image"
+                and response
+                != "An error occurred while generating the image. Please try again later."
+            ):
+                await client.send_file(event.sender_id, response)
+
+            chat = openai.chat.completions.create(
+                messages=messages,
+                model="gpt-3.5-turbo",
+                tools=tools,
+                tool_choice="auto",
+            )
+            return await process_response(
+                chat=chat,
+                event=event,
+                user=user,
+                messages=messages,
+                response_message=response_message,
+                user_current_conv=user_current_conv,
+            )
+
         await event.respond(
-            "I need to use a tool to respond to your query. Please wait a moment..."
+            "Sorry, I could not understand your query. Please try again."
         )
 
 
 async def process_ai_chat_message(event: events.NewMessage.Event, user: User) -> None:
-    # Respond to the user indicating that the chatbot is processing their query
-    response_message = await event.respond(
-        "Please wait a moment while the chatbot responds to your query..."
-    )
+    response_message = await event.respond("Please wait a moment...")
 
     # Retrieve the current conversation from the database
 

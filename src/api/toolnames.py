@@ -55,7 +55,7 @@ send_mail_tool = ChatCompletionToolParam(
 
 generate_image_tool = ChatCompletionToolParam(
     function=FunctionDefinition(
-        description="Generate an image based on a prompt",
+        description="Generate an image based on a prompt.",
         name="generate_image",
         parameters={
             "type": "object",
