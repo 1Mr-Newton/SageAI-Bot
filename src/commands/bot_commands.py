@@ -1,4 +1,5 @@
 from src.commands.command_proccessors import (
+    new_chat_handler,
     start_handler,
     help_handler,
     settings_handler,
@@ -7,7 +8,15 @@ from src.commands.command_proccessors import (
     history_handler,
 )
 
-bot_commands = ["/help", "/start", "/settings", "/about", "/clear", "/history"]
+bot_commands = [
+    "/help",
+    "/start",
+    "/settings",
+    "/about",
+    "/clear",
+    "/history",
+    "/new_chat",
+]
 
 
 bot_commands_dict = {
@@ -17,4 +26,5 @@ bot_commands_dict = {
     "/about": about_handler,
     "/clear": clear_handler,
     "/history": history_handler,
+    "/new_chat": new_chat_handler,
 }
