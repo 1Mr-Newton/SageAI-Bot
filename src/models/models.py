@@ -8,3 +8,8 @@ class User(BaseModel):
     user_id: str
     oai_id: UUID4
     display_name: str
+
+
+class UserMessage(BaseModel):
+    content: str
+    role: str

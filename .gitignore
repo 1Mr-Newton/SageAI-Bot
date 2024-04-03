@@ -9,3 +9,4 @@ __pycache__
 *.html
 test.py
 !requirements.txt
+*.db

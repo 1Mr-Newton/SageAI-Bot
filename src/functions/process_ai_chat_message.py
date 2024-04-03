@@ -78,9 +78,5 @@ async def process_ai_chat_message(event: events.NewMessage.Event, user: User) ->
         tools=tools,
         tool_choice="auto",
     )
-    message = chat.choices[0].message
-    is_tool_call = chat.choices[0].finish_reason == "tool_calls"
-
-    print("is_tool_call", is_tool_call)
-
     await msg.edit("message")
+    return await process_response(event=event, user=user, chat=chat)
