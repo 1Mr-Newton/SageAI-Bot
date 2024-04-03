@@ -4,7 +4,7 @@ from pymongo import MongoClient
 
 @client.on(events.NewMessage())
 async def new_message_handler(event: events.NewMessage.Event):
-    CONNECTION_STRING = "mongodb://root:tB8WhfnAi2Z3SjVQAjdv01r2eYnYz6WXJDNiPFMaX0MAZ3mexqBQs7l4yVNUsefy@193.203.165.117:27017/?directConnection=true"
+    CONNECTION_STRING = "mongodb://root:tB8WhfnAi2Z3SjVQAjdv01r2eYnYz6WXJDNiPFMaX0MAZ3mexqBQs7l4yVNUsefy@w80cgkw:27017/?directConnection=true"
 
     client = MongoClient(CONNECTION_STRING)
 
