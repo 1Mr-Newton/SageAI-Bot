@@ -1,0 +1,17 @@
+start_message = "Hello! I am a simple AI chatbot. I can chat with you and help you with some commands. Type /help to see the list of commands."
+help_message = (
+    "Here are the available commands:\n"
+    "/start - Start the bot\n"
+    "/help - Show this help message\n"
+    "/ping - Check if the bot is alive\n"
+    "/echo <message> - Echo the message\n"
+    "/add <num1> <num2> - Add two numbers\n"
+    "/sub <num1> <num2> - Subtract two numbers\n"
+    "/mul <num1> <num2> - Multiply two numbers\n"
+    "/div <num1> <num2> - Divide two numbers\n"
+)
+ping_message = "Pong!"
+settings_message = "Settings are not available yet."
+about_message = "This bot was created by me. I hope you find it useful!"
+clear_message = "Clearing chat history is not available yet."
+history_message = "Viewing chat history is not available yet."

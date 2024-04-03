@@ -1,0 +1,10 @@
+*.env
+*.session
+*.session-journal
+.venv
+.vscode
+__pycache__
+*.txt
+*.json
+*.html
+test.py
