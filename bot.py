@@ -12,6 +12,7 @@ async def new_message_handler(event: events.NewMessage.Event):
     # await process_chat_message(event=event)
     print("Processing...")
     print(dbs)
+    await event.respond("Hi")
 
 
 client.run_until_disconnected()

@@ -32,7 +32,7 @@ from openai.types.chat import (
     ChatCompletionMessageParam,
     ChatCompletion,
 )
-from constants.system_message import system_message
+from src.constants.system_message import system_message
 from time import perf_counter
 
 
