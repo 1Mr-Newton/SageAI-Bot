@@ -60,6 +60,10 @@ async def process_response(
                 event=event,
                 message="Sorry, I could not understand your query. Please try again.",
             )
+    else:
+        await event.respond(
+            "I need to use a tool to respond to your query. Please wait a moment..."
+        )
 
 
 async def process_ai_chat_message(event: events.NewMessage.Event, user: User) -> None:
