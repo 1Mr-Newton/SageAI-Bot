@@ -8,3 +8,4 @@ __pycache__
 *.json
 *.html
 test.py
+!requirements.txt
