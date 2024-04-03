@@ -7,81 +7,80 @@ from src.constants.system_message import system_message
 from src.constants.urls import openai_conversation_url
 from src.functions.safe_send import safe_send_message
 from src.models.models import User
+import openai
+from src.api.toolnames import tools
+from openai.types.chat import ChatCompletion
+
+#
+import openai
+import json
+import os
+from dotenv import load_dotenv
+from openai.types.chat.chat_completion_message_param import ChatCompletionMessageParam
+
+from openai.types.chat.chat_completion_user_message_param import (
+    ChatCompletionUserMessageParam as UserMessage,
+)
+from openai.types.chat.chat_completion_assistant_message_param import (
+    ChatCompletionAssistantMessageParam as AssistantMessage,
+)
+
+from openai.types.chat.chat_completion_function_message_param import (
+    ChatCompletionFunctionMessageParam as FunctionMessage,
+)
+from openai.types.chat import (
+    ChatCompletionMessageParam,
+    ChatCompletion,
+)
+from constants.system_message import system_message
+from time import perf_counter
+
+
+async def process_response(
+    event: events.NewMessage.Event,
+    user: User,
+    chat: ChatCompletion,
+):
+    message = chat.choices[0].message
+    is_tools_call = chat.choices[0].finish_reason == "tool_calls"
+    if not is_tools_call:
+        assistant_message = AssistantMessage(
+            content=message.content,
+            role="assistant",
+        )
+        if message.content:
+            # messages.append(assistant_message)
+            await safe_send_message(event=event, message=message.content)
+        else:
+            await safe_send_message(
+                event=event,
+                message="Sorry I could not understand your query. Please try again.",
+            )
 
 
 async def process_ai_chat_message(event: events.NewMessage.Event, user: User) -> None:
+    msg = await event.respond(
+        "Please wait a moment while the chatbot responds to your query . . ."
+    )
 
-    oai_did = str(user.oai_id)
-    token = get_chat_token(oai_did)
-    headers = {
-        "accept": "text/event-stream",
-        "accept-language": "en-US,en;q=0.9,la;q=0.8,ru;q=0.7,es;q=0.6",
-        "content-type": "application/json",
-        "oai-device-id": oai_did,
-        "oai-language": "en-US",
-        "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36",
-        "openai-sentinel-chat-requirements-token": token,
-    }
-
-    body = {
-        "action": "next",
-        "messages": [
+    chat = openai.chat.completions.create(
+        messages=[
             {
-                "id": str(uuid4()),
-                "author": {"role": "system"},
-                "content": {
-                    "content_type": "text",
-                    "parts": [system_message],
-                },
-                "metadata": {},
+                "role": "system",
+                "content": "You are a helpful assistant. Don't make up information if you don't know the answer. Just say you don't know in a professional way.",
             },
             {
-                "id": str(uuid4()),
-                "author": {"role": "user"},
-                "content": {
-                    "content_type": "text",
-                    "parts": [event.raw_text],
-                },
-                "metadata": {},
+                "role": "user",
+                "content": event.raw_text,
             },
         ],
-        "parent_message_id": str(uuid4()),
-        "model": "text-davinci-002-render-sha",
-        "conversation_mode": {"kind": "primary_assistant"},
-        "timezone_offset_min": 0,
-        "suggestions": [],
-        "history_and_training_disabled": False,
-        "force_paragen": False,
-        "force_paragen_model_slug": "",
-        "force_rate_limit": False,
-    }
-    response = requests.post(
-        openai_conversation_url,
-        headers=headers,
-        json=body,
-        stream=True,
+        model="gpt-3.5-turbo",
+        tools=tools,
+        tool_choice="auto",
     )
-    if response.status_code != 200:
-        await event.respond(
-            "An error occurred while processing your message. Please try again later."
-        )
-        return
-    for line in response.iter_lines():
-        if line:
-            string_response = line.decode("utf-8")
-            json_string = string_response.replace("data: ", "")
-            try:
-                data = json.loads(json_string)
-                with open("data.json", "w") as f:
-                    json.dump(data, f)
-                message = data.get("message", {})
-                isAssistant = message.get("author", {}).get("role") == "assistant"
-                isFinished = message.get("status", {}) == "finished_successfully"
-                if isAssistant and isFinished:
-                    final_message = "\n".join(message.get("content", {}).get("parts"))
-                    await safe_send_message(event, final_message)
-                    return
-            except json.JSONDecodeError:
-                continue
+    message = chat.choices[0].message
+    is_tool_call = chat.choices[0].finish_reason == "tool_calls"
 
-    # await event.respond(f"Processing AI chat message: {message}")
+    print("is_tool_call", is_tool_call)
+
+    await msg.edit("message")
